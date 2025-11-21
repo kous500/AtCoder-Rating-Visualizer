@@ -11,7 +11,7 @@
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
             line-height: 1.6;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f4f4f9;
@@ -20,6 +20,7 @@
         h1, h2 {
             border-bottom: 1px solid #ccc;
             padding-bottom: 10px;
+            margin-top: 0;
         }
         .container {
             display: flex;
@@ -44,19 +45,21 @@
         }
         textarea {
             width: 100%;
-            height: 200px;
+            height: 150px;
             font-family: monospace;
             margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 5px;
+            font-size: 0.9em;
         }
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            font-size: 0.95em;
         }
-        input[type="date"] {
+        input[type="date"], input[type="text"], select {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -72,9 +75,20 @@
             cursor: pointer;
             font-size: 16px;
             width: 100%;
+            margin-bottom: 10px;
+            transition: background-color 0.2s;
         }
         button:hover {
             background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .import-group {
+            border-bottom: 1px dashed #ccc;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
         }
         #canvas-container {
             width: 100%;
@@ -86,20 +100,84 @@
         canvas {
             background-color: #fff;
             display: block;
-            width: 100%; /* 論理サイズは100%で維持 */
+            width: 100%;
             height: auto;
-        }
-        .stats {
-            margin-top: 10px;
-            margin-left: 10px;
-            font-size: 0.9em;
         }
         .note {
             font-size: 0.8em;
             color: #666;
-            margin-top: 5px;
-            margin-bottom: 5px;
-            margin-left: 5px;
+            margin-top: 2px;
+            margin-bottom: 8px;
+        }
+
+        /* Stats Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label {
+            font-size: 0.75em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-value.highlight {
+            color: #1b5695;
+        }
+
+        /* Animation Controls */
+        .animation-controls {
+            background: #eef2f7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #dae0e5;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+        #timelineSlider {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+        #playPauseBtn {
+            width: auto;
+            margin-bottom: 0;
+            min-width: 50px;
+        }
+        #currentDateLabel {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1em;
+            min-width: 110px;
+            text-align: center;
+        }
+        .speed-select {
+            width: auto;
+            margin-bottom: 0;
+            padding: 5px;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -111,46 +189,93 @@
     <div class="input-section">
         <h2>Input</h2>
 
+        <div class="import-group">
+            <label for="atcoderId">Import from AtCoder</label>
+            <div class="note">Enter AtCoder ID to fetch heuristic contest history.</div>
+            <input type="text" id="atcoderId" placeholder="e.g. chokudai">
+            <button id="fetchButton" onclick="fetchUserData()">Fetch Data</button>
+            <div id="fetchStatus" class="note"></div>
+        </div>
+
         <label for="refDate">Calculation Base Date (UTC+9)</label>
         <div class="note">If the date entered is before 2025, the v1 rating system will be applied.</div>
-        <input type="date" id="refDate" value="2025-11-17">
+        <input type="date" id="refDate">
 
         <label for="contestData">Contest Data</label>
-        <div class="note">Format: Contest name, Weight, Performance, Contest end date</div>
+        <div class="note">Format: ContestID, Weight, Performance, EndDate</div>
         <textarea id="contestData">
-AHC056,1.0,1996,2025-11-17T00:00:00
-AHC054,1.0,1244,2025-09-29T00:00:00
-AHC053,0.5,823,2025-09-13T00:00:00
-AHC051,1.0,2172,2025-08-11T00:00:00
-AHC050,0.5,2093,2025-07-06T00:00:00
-AHC048,1.0,2277,2025-06-09T00:00:00
-AHC045,1.0,1599,2025-04-07T00:00:00
-AHC043,1.0,1611,2025-02-24T00:00:00
-AHC041,0.5,762,2025-01-19T00:00:00
-AHC040,1.0,1952,2024-12-09T00:00:00
-AHC039,1.0,555,2024-11-10T00:00:00
-AHC038,1.0,1121,2024-10-14T00:00:00
-AHC036,1.0,1281,2024-09-02T00:00:00
-AHC034,1.0,902,2024-06-16T00:00:00
-AHC033,1.0,1764,2024-05-27T00:00:00
-AHC032,1.0,1446,2024-04-07T00:00:00
-AHC031,1.0,1467,2024-04-01T00:00:00
-AHC030,1.0,1326,2024-02-19T00:00:00
-AHC029,1.0,1317,2023-12-26T00:00:00
-AHC027,1.0,1530,2023-12-10T00:00:00
-AHC026,1.0,1213,2023-11-05T00:00:00
-AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
+AHC025, 1, 1438, 2023-10-22T10:00:00
+AHC026, 1, 1213, 2023-11-05T10:00:00
+AHC027, 1, 1530, 2023-12-10T10:00:00
+AHC029, 1, 1317, 2023-12-26T12:00:00
+AHC030, 1, 1326, 2024-02-19T10:00:00
+AHC031, 1, 1467, 2024-04-01T10:00:00
+AHC032, 1, 1446, 2024-04-07T14:00:00
+AHC033, 1, 1764, 2024-05-27T10:00:00
+AHC034, 1, 902, 2024-06-16T10:00:00
+AHC036, 1, 1281, 2024-09-02T10:00:00
+AHC038, 1, 1121, 2024-10-14T10:00:00
+AHC039, 1, 555, 2024-11-10T10:00:00
+AHC040, 1, 1952, 2024-12-09T10:00:00
+AHC041, 0.5, 762, 2025-01-19T10:00:00
+AHC043, 1, 1611, 2025-02-24T10:00:00
+AHC045, 1, 1599, 2025-04-07T10:00:00
+AHC048, 1, 2277, 2025-06-09T10:00:00
+AHC050, 0.5, 2093, 2025-07-06T14:00:00
+AHC051, 1, 2172, 2025-08-11T10:00:00
+AHC053, 0.5, 823, 2025-09-13T14:00:00
+AHC054, 1, 1244, 2025-09-29T10:00:00
+AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
 
-        <button onclick="calculateAndDraw()">Run the visualization</button>
+        <button onclick="prepareAndRun()">Load Data & Draw</button>
     </div>
 
     <div class="output-section">
-        <h2>Visualization Results</h2>
-        <div class="stats">
-            <div id="baseDateResult">Calculation Base Date (UTC+9): -</div>
-            <div id="ratingSystemResult">Rating System: -</div>
-            <div id="ratedMatchesResult">Rated Matches: 0</div>
-            <div id="ratingResult">Rating: -</div>
+        <h2>Visualization</h2>
+        
+        <div class="animation-controls">
+            <div class="control-row">
+                <button id="playPauseBtn" onclick="toggleAnimation()">▶</button>
+                <div id="currentDateLabel">YYYY-MM-DD</div>
+                <input type="range" id="timelineSlider" min="0" max="100" value="100" oninput="onSliderChange()">
+            </div>
+            <div class="control-row" style="justify-content: flex-end;">
+                <label style="margin:0; margin-right:5px; font-size:0.8em;">Speed:</label>
+                <select id="speedSelect" class="speed-select">
+                    <option value="1" selected>x1 (1 day/frame)</option>
+                    <option value="1.5">x1.5</option>
+                    <option value="2">x2</option>
+                    <option value="3">x3</option>
+                    <option value="4">x4</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-label">Username</span>
+                <span class="stat-value" id="statUsername">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Rating System</span>
+                <span class="stat-value" id="statSystem">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Current Base Date</span>
+                <span class="stat-value" id="statBaseDate">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Rated Matches</span>
+                <span class="stat-value" id="statMatches">0</span>
+            </div>
+            <div class="stat-item" style="grid-column: span 2;">
+                <span class="stat-label">Unadjusted Rating</span>
+                <span class="stat-value" id="statRawRating">-</span>
+            </div>
+            <div class="stat-item" style="grid-column: span 2;">
+                <span class="stat-label">Rating</span>
+                <span class="stat-value highlight" id="statRating">-</span>
+            </div>
         </div>
 
         <div id="canvas-container">
@@ -164,6 +289,173 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
     const R = 0.8271973364;
     const S = 724.4744301;
     const V2_BASE_DATE = new Date("2025-01-01T00:00:00");
+    
+    // URLs
+    const ATCODER_PROXY_URL = "https://script.google.com/macros/s/AKfycby-CKUsGoe7YZBeIf9FMwvCK6JIfqnVkN-8764iNkRApGPns158Q6vJPxpDdnGfsDXU/exec";
+    const ATCODER_PROBLEMS_URL = "https://kenkoooo.com/atcoder/resources/contests.json";
+
+    // Animation State
+    let isPlaying = false;
+    let animationReqId = null;
+    let cachedContests = [];
+    let timelineStart = 0;
+    let timelineEnd = 0;
+
+    // Helper: Normalize date to Midnight 00:00:00
+    function toMidnight(d) {
+        const newDate = new Date(d);
+        newDate.setHours(0, 0, 0, 0);
+        return newDate;
+    }
+
+    // Format Date YYYY-MM-DD
+    function formatDate(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        document.getElementById('refDate').value = formatDate(today);
+        prepareAndRun(); 
+    });
+
+    // --- Data Fetching ---
+    async function fetchUserData() {
+        const userId = document.getElementById('atcoderId').value.trim();
+        const statusDiv = document.getElementById('fetchStatus');
+        const btn = document.getElementById('fetchButton');
+
+        if (!userId) {
+            alert("Please enter an AtCoder ID.");
+            return;
+        }
+
+        try {
+            statusDiv.innerText = "Fetching data...";
+            statusDiv.style.color = "#666";
+            btn.disabled = true;
+
+            const [historyRes, metadataRes] = await Promise.all([
+                fetch(`${ATCODER_PROXY_URL}?type=heuristic&id=${userId}`),
+                fetch(ATCODER_PROBLEMS_URL)
+            ]);
+
+            if (!historyRes.ok) throw new Error("Failed to fetch user history");
+            if (!metadataRes.ok) throw new Error("Failed to fetch contest metadata");
+
+            const history = await historyRes.json();
+            const metadata = await metadataRes.json();
+
+            if (!Array.isArray(history) || history.length === 0) {
+                throw new Error("No heuristic contest history found for this user.");
+            }
+
+            const contestMap = new Map(metadata.map(c => [c.id, c]));
+            const ratedHistory = history.filter(h => h.IsRated && h.Performance > 0);
+            
+            let latestDate = new Date(0); 
+
+            const csvLines = ratedHistory.map(h => {
+                const contestId = h.ContestScreenName.split('.')[0];
+                const meta = contestMap.get(contestId);
+                
+                let weight = 1.0;
+                if (meta) {
+                    const startTime = new Date(meta.start_epoch_second * 1000);
+                    const startYear = startTime.getFullYear();
+                    const duration = meta.duration_second;
+
+                    if (startYear >= 2025) {
+                        weight = (duration < 24 * 60 * 60) ? 0.5 : 1.0;
+                    } else {
+                        weight = 1.0;
+                    }
+                }
+
+                const endDate = new Date(h.EndTime);
+                if (endDate > latestDate) latestDate = endDate;
+                
+                const dateStr = endDate.toISOString().split('.')[0]; 
+                return `${contestId.toUpperCase()}, ${weight}, ${h.Performance}, ${dateStr}`;
+            });
+
+            document.getElementById('contestData').value = csvLines.join('\n');
+            document.getElementById('statUsername').innerText = userId;
+            
+            if (latestDate.getTime() > 0) {
+                document.getElementById('refDate').value = formatDate(latestDate);
+            }
+
+            statusDiv.innerText = `Successfully fetched ${csvLines.length} rated contests.`;
+            statusDiv.style.color = "green";
+
+            prepareAndRun();
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = `Error: ${error.message}`;
+            statusDiv.style.color = "red";
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // --- Main Logic ---
+
+    // 1. Parse Data, Setup Animation Range, Initial Draw
+    function prepareAndRun() {
+        // Stop current animation if any
+        if (isPlaying) toggleAnimation();
+
+        // Parse Inputs
+        cachedContests = parseInput();
+        
+        const refDateVal = document.getElementById('refDate').value;
+        let targetEndDate = refDateVal ? new Date(refDateVal) : new Date();
+        
+        // Setup Timeline Range
+        // Start: End date of the first contest (or today if no data)
+        // End: Max of (Last contest date, Input Reference Date)
+        if (cachedContests.length > 0) {
+            // Sort by date for timeline logic
+            cachedContests.sort((a, b) => a.endDate - b.endDate);
+            
+            const firstContestDate = cachedContests[0].endDate;
+            const lastContestDate = cachedContests[cachedContests.length - 1].endDate;
+            
+            // Ensure timeline covers all data up to reference
+            timelineStart = toMidnight(firstContestDate).getTime();
+            let userEnd = toMidnight(targetEndDate).getTime();
+            
+            // If input date is older than first contest, just use first contest as start
+            if (userEnd < timelineStart) userEnd = timelineStart;
+            
+            timelineEnd = userEnd;
+            
+            // If user inputted a date far in the future, timelineEnd is that date.
+            // If user inputted a date in the past (relative to latest contest), should we extend?
+            // Usually we want to see up to the latest contest.
+            if (toMidnight(lastContestDate).getTime() > timelineEnd) {
+                timelineEnd = toMidnight(lastContestDate).getTime();
+            }
+        } else {
+            timelineStart = toMidnight(new Date()).getTime();
+            timelineEnd = timelineStart;
+        }
+
+        // Setup Slider
+        const slider = document.getElementById('timelineSlider');
+        slider.min = timelineStart;
+        slider.max = timelineEnd;
+        slider.value = timelineEnd; // Default to end
+        
+        // Draw at slider position
+        updateVisualization(new Date(parseInt(slider.value)));
+    }
 
     function parseInput() {
         const rawText = document.getElementById('contestData').value.trim();
@@ -189,83 +481,30 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
         return contests;
     }
 
-    function getDaysDiff(fromDate, toDate) {
-        const diffTime = fromDate - toDate;
-        return diffTime / (1000 * 60 * 60 * 24);
-    }
+    // 2. Calculate and Draw for a specific Date
+    function updateVisualization(currentDate) {
+        // UI Update
+        document.getElementById('currentDateLabel').innerText = formatDate(currentDate);
+        document.getElementById('statBaseDate').innerText = formatDate(currentDate);
 
-    function stringToColor(str) {
-        let h = 0;
+        const currentDateMidnight = toMidnight(currentDate);
+        const v2_base_midnight = toMidnight(V2_BASE_DATE);
+        const v2_rating = v2_base_midnight <= currentDateMidnight;
 
-        // 1. 文字列を整数ハッシュに変換 (単純なアキュムレータ)
-        for (let i = 0; i < str.length; i++) {
-            // Math.imul は C言語のような32bit乗算を行う
-            h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-        }
-
-        // 2. ミキシング処理 (Avalanche Effectの適用)
-        // 入力ビットを強く攪拌し、類似した入力から離れた出力値を得る
-        h ^= h >>> 16;
-        h = Math.imul(h, 0x85ebca6b);
-        h ^= h >>> 13;
-        h = Math.imul(h, 0xc2b2ae35);
-        h ^= h >>> 16;
-
-        // 3. RGB成分の抽出
-        // 生成された32bit整数の下位24bitを使用
-        // 負の数を考慮し >>> 0 で符号なし整数化してからマスク処理
-        const colorInt = (h >>> 0) & 0xFFFFFF;
-
-        // 6桁の16進数に変換し、足りない桁を0埋め
-        return '#' + colorInt.toString(16).padStart(6, '0');
-    }
-
-    function getContrastColor(hex) {
-        const r = parseInt(hex.substr(1, 2), 16);
-        const g = parseInt(hex.substr(3, 2), 16);
-        const b = parseInt(hex.substr(5, 2), 16);
-        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-        return (yiq >= 128) ? 'black' : 'white';
-    }
-
-    function getRatingColor(rate) {
-        if (2800 <= rate) {
-            return "#FFB2B2";
-        } else if (2400 <= rate) {
-            return "#FFD9B2";
-        } else if (2000 <= rate) {
-            return "#ECECB2";
-        } else if (1600 <= rate) {
-            return "#B2B2FF";
-        } else if (1200 <= rate) {
-            return "#B2ECEC";
-        } else if (800 <= rate) {
-            return "#B2D9B2";
-        } else if (400 <= rate) {
-            return "#D9C5B2";
-        } else {
-            return "#D9D9D9";
-        }
-    }
-
-    function calculateAndDraw() {
-        const contests = parseInput();
-        const refDateVal = document.getElementById('refDate').value;
-        if (!refDateVal) {
-            alert("計算基準日を入力してください。");
-            return;
-        }
-        const refDate = new Date(refDateVal);
-        const v2_rating = V2_BASE_DATE <= refDate;
-
-        // 1. 減衰パフォーマンス計算
+        // Process Data
         let processedContests = [];
-        contests.forEach(c => {
-            if (refDate < c.endDate) {
+        
+        // Use cachedContests
+        cachedContests.forEach(c => {
+            const cEndMidnight = toMidnight(c.endDate);
+            
+            // Filter future contests relative to animation date
+            if (currentDateMidnight < cEndMidnight) {
                 return;
             }
+
             if (v2_rating) {
-                const d = getDaysDiff(refDate, c.endDate);
+                const d = (currentDateMidnight - cEndMidnight) / (1000 * 60 * 60 * 24);
                 const decayedPerf = c.perf + 150 - 100 * (d / 365);
                 processedContests.push({ ...c, decayedPerf });
             } else {
@@ -274,7 +513,7 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
             }
         });
 
-        // 2. 拡張リストQの作成
+        // Generate Q List
         let Q = [];
         processedContests.forEach(c => {
             const color = stringToColor(c.name);
@@ -290,16 +529,16 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
             }
         });
 
-        // 3. ソート
         Q.sort((a, b) => b.q - a.q);
 
-        // 4. レーティング計算と長方形データの作成
+        // Calc Rating & Rects
         let currentRating = 0;
         let s_prev = 0;
         let si = 0;
         let rectangles = [];
         let minQValue = 0;
 
+        // Range detection
         for (let i = 0; i < Q.length; i++) {
             const item = Q[i];
             const s_curr = si + item.w;
@@ -310,24 +549,19 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
             si = s_curr;
         }
 
-        // Y軸スケール決定用
         const maxQValue = Q.length > 0 ? Q[0].q : 0;
         const maxY = Math.max(0, Math.ceil(maxQValue / 100) * 100 + 200);
         const minY = Math.min(0, Math.floor(minQValue / 400) * 400);
 
-        // X軸スケール決定用 (1 -> R^total)
         let s_total = 0;
-        for (const item of Q) {
-            s_total += item.w;
-        }
+        for (const item of Q) s_total += item.w;
         const minXLogical = Math.pow(R, s_total);
 
         for (let i = 0; i < Q.length; i++) {
             const item = Q[i];
             const s_curr = s_prev + item.w;
-
-            const r_pow_prev = Math.pow(R, s_prev); // 大きい値 (開始点)
-            const r_pow_curr = Math.pow(R, s_curr); // 小さい値 (終了点)
+            const r_pow_prev = Math.pow(R, s_prev);
+            const r_pow_curr = Math.pow(R, s_curr);
 
             const term = item.q * (r_pow_prev - r_pow_curr);
             currentRating += term;
@@ -340,80 +574,190 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
                 j: item.j,
                 color: item.color
             });
-
             s_prev = s_curr;
         }
 
-        // 5. レーティング補正
         let finalRating = currentRating;
         if (finalRating < 400) {
             finalRating = 400 / Math.exp((400 - finalRating) / 400);
         }
 
-        document.getElementById('ratedMatchesResult').innerText = `Rated Matches: ${processedContests.length}`;
+        // Update Stats
+        document.getElementById('statMatches').innerText = processedContests.length;
+        document.getElementById('statSystem').innerText = v2_rating ? 'AHC (v2)' : 'AHC (v1)';
+        
         if (Q.length > 0) {
-            document.getElementById('baseDateResult').innerText = `Calculation Base Date (UTC+9): ${refDate.toLocaleDateString()}`;
-            document.getElementById('ratingSystemResult').innerText = `Rating System: ${v2_rating ? 'AHC (v2)' : 'AHC (v1)'}`;
-            document.getElementById('ratingResult').innerText = `Rating: ${Math.round(finalRating)} (${currentRating})`;
+            document.getElementById('statRating').innerText = Math.round(finalRating);
+            document.getElementById('statRawRating').innerText = currentRating;
         } else {
-            document.getElementById('baseDateResult').innerText = `Calculation Base Date (UTC+9): -`;
-            document.getElementById('ratingSystemResult').innerText = `Rating System: -`;
-            document.getElementById('ratingResult').innerText = `Rating: -`;
+            document.getElementById('statRating').innerText = "-";
+            document.getElementById('statRawRating').innerText = "-";
         }
 
-        // 6. 描画
+        // Username manual fallback
+        if(document.getElementById('statUsername').innerText === '-') {
+             const inputId = document.getElementById('atcoderId').value;
+             if(inputId) document.getElementById('statUsername').innerText = inputId + " (Manual)";
+        }
+
         drawCanvas(rectangles, minY, maxY, minXLogical, currentRating);
+    }
+
+    // 3. Animation Control
+    function toggleAnimation() {
+        const btn = document.getElementById('playPauseBtn');
+        const slider = document.getElementById('timelineSlider');
+        
+        if (isPlaying) {
+            // Pause
+            isPlaying = false;
+            cancelAnimationFrame(animationReqId);
+            btn.innerText = "▶";
+        } else {
+            // Play
+            // If at end, restart
+            if (parseInt(slider.value) >= parseInt(slider.max)) {
+                slider.value = slider.min;
+            }
+            
+            isPlaying = true;
+            btn.innerText = "⏸";
+            loop();
+        }
+    }
+
+    function loop() {
+        if (!isPlaying) return;
+
+        const slider = document.getElementById('timelineSlider');
+        const speedVal = parseInt(document.getElementById('speedSelect').value);
+        
+        // Advance time (ms)
+        // Speed is days per frame roughly
+        // 1 day = 86400000 ms
+        let current = parseInt(slider.value);
+        let next = current + (speedVal * 86400000);
+        
+        if (next >= timelineEnd) {
+            next = timelineEnd;
+            isPlaying = false;
+            document.getElementById('playPauseBtn').innerText = "▶";
+        }
+
+        slider.value = next;
+        updateVisualization(new Date(next));
+
+        if (isPlaying) {
+            animationReqId = requestAnimationFrame(loop);
+        }
+    }
+
+    function onSliderChange() {
+        const slider = document.getElementById('timelineSlider');
+        const val = parseInt(slider.value);
+        
+        // If user drags slider while playing, pause or just update?
+        // Let's just update. If dragging, it might jump around if playing.
+        // Optional: pause on drag
+        updateVisualization(new Date(val));
+    }
+
+    // --- Helpers ---
+    function getDaysDiff(fromDate, toDate) {
+        const diffTime = fromDate - toDate;
+        return diffTime / (1000 * 60 * 60 * 24);
+    }
+
+    function stringToColor(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) {
+            h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+        }
+        h ^= h >>> 16;
+        h = Math.imul(h, 0x85ebca6b);
+        h ^= h >>> 13;
+        h = Math.imul(h, 0xc2b2ae35);
+        h ^= h >>> 16;
+        const colorInt = (h >>> 0) & 0xFFFFFF;
+        return '#' + colorInt.toString(16).padStart(6, '0');
+    }
+
+    function getContrastColor(hex) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? 'black' : 'white';
+    }
+
+    function getRatingColor(rate) {
+        if (2800 <= rate) return "#FFB2B2";
+        else if (2400 <= rate) return "#FFD9B2";
+        else if (2000 <= rate) return "#ECECB2";
+        else if (1600 <= rate) return "#B2B2FF";
+        else if (1200 <= rate) return "#B2ECEC";
+        else if (800 <= rate) return "#B2D9B2";
+        else if (400 <= rate) return "#D9C5B2";
+        else return "#D9D9D9";
     }
 
     function drawCanvas(rectangles, minY, maxY, minXLogical, currentRating) {
         const canvas = document.getElementById('ratingCanvas');
         const ctx = canvas.getContext('2d');
 
-        // HiDPI (Retina) ディスプレイ対応
         const devicePixelRatio = window.devicePixelRatio || 1;
-
-        // キャンバスのwidth/heightを動的に設定し、正方形にする
         const containerWidth = canvas.parentElement.clientWidth;
-        const LOGICAL_CANVAS_SIZE = containerWidth; // 論理サイズ (CSSピクセル)
+        const LOGICAL_CANVAS_SIZE = containerWidth;
 
+        // Only resize if changed to avoid flicker/perf hit? 
+        // Actually setting width/height clears canvas, so we must do it or clearRect.
+        // For responsive, we set it every time.
         canvas.style.width = `${LOGICAL_CANVAS_SIZE}px`;
         canvas.style.height = `${LOGICAL_CANVAS_SIZE}px`;
-
-        // 物理ピクセル数でキャンバスの属性を設定し、ぼやけを解消
         canvas.width = LOGICAL_CANVAS_SIZE * devicePixelRatio;
         canvas.height = LOGICAL_CANVAS_SIZE * devicePixelRatio;
-
-        // 描画コンテキストをスケールアップ
         ctx.scale(devicePixelRatio, devicePixelRatio);
 
-        // ここから下のW, Hは論理サイズとして扱う
         const W = LOGICAL_CANVAS_SIZE;
         const H = LOGICAL_CANVAS_SIZE;
         
         ctx.clearRect(0, 0, W, H);
 
-        if (rectangles.length === 0) return;
+        // Empty State
+        if (rectangles.length === 0) {
+            ctx.fillStyle = "#666";
+            ctx.font = "14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("No contests evaluated yet.", W/2, H/2);
+            return;
+        }
 
-        const margin = { top: H * 0.08, right: W * 0.05, bottom: H * 0.08, left: W * 0.1 }; // マージンを比率で指定
+        const margin = { top: H * 0.08, right: W * 0.05, bottom: H * 0.08, left: W * 0.1 };
         const drawW = W - margin.left - margin.right;
         const drawH = H - margin.top - margin.bottom;
 
-        // X軸変換係数: 論理空間 [minXLogical, 1] を 画面空間 [0, drawW] にマッピング
-        // 左端(0) が 論理1.0、右端(drawW) が 論理minXLogical となるように配置
         const xScale = drawW / (1 - minXLogical);
 
-        // 背景カラー
-        for (let y = minY; y < maxY; y += 400) {
-            ctx.fillStyle = getRatingColor(y);
-            ctx.fillRect(margin.left, margin.top, drawW, drawH - ((y - minY) / (maxY - minY) * drawH));
+        // Background Bands
+        const startBandY = Math.floor(minY / 400) * 400;
+        for (let bandY = startBandY; bandY < maxY; bandY += 400) {
+            ctx.fillStyle = getRatingColor(bandY);
+            const bandTop = Math.min(bandY + 400, maxY);
+            const bandBottom = Math.max(bandY, minY);
+            if (bandTop <= bandBottom) continue;
+
+            const py_top = margin.top + drawH - ((bandTop - minY) / (maxY - minY) * drawH);
+            const py_bottom = margin.top + drawH - ((bandBottom - minY) / (maxY - minY) * drawH);
+            const rectHeight = py_bottom - py_top;
+            
+            ctx.fillRect(margin.left, py_top, drawW, rectHeight);
         }
 
-        // 長方形描画
+        // Rectangles
         rectangles.forEach(rect => {
             const px_start_logical = rect.x_start;
             const px_end_logical = rect.x_end;
 
-            // 座標変換
             const px_screen_left = (1 - px_start_logical) * xScale + margin.left;
             const px_screen_right = (1 - px_end_logical) * xScale + margin.left;
 
@@ -421,28 +765,20 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
             const rect_h = ((rect.y - minY) / (maxY - minY)) * drawH;
             const py = margin.top + drawH - rect_h;
 
-            if (rect_h <= 0) {
-                return;
-            }
+            if (rect_h <= 0) return;
 
-            // 塗りつぶし
             ctx.fillStyle = rect.color;
             ctx.fillRect(px_screen_left, py, rect_w, rect_h);
             ctx.strokeStyle = "rgba(0,0,0,0.2)";
-            ctx.lineWidth = 1 / devicePixelRatio; // 枠線もスケールに合わせる
+            ctx.lineWidth = 1 / devicePixelRatio;
             ctx.strokeRect(px_screen_left, py, rect_w, rect_h);
 
-            // ラベル描画 (縦書き・自動調整)
+            // Label
             const label = `${rect.name} (${rect.j})`;
-
-            // 描画領域が極端に小さい場合はテキストを描画しない
-            // テキストの最小表示サイズもデバイスピクセル比率で調整
-            const MIN_FONT_SIZE = 10 / devicePixelRatio; // 最小フォントサイズ
+            const MIN_FONT_SIZE = 10 / devicePixelRatio;
 
             if (rect_w / devicePixelRatio > MIN_FONT_SIZE) {
                 ctx.save();
-
-                // クリップ領域設定（長方形からはみ出さないようにする）
                 ctx.beginPath();
                 ctx.rect(px_screen_left, py, rect_w, rect_h);
                 ctx.clip();
@@ -451,21 +787,17 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
 
-                // 90度回転設定
                 const cx = px_screen_left + rect_w / 2;
                 const cy = py + rect_h / 2;
 
                 ctx.translate(cx, cy);
                 ctx.rotate(-Math.PI / 2);
 
-                // フォントサイズ自動調整
                 let fontSize = Math.max(rect_w * 0.5, MIN_FONT_SIZE);
-
                 ctx.font = `${fontSize}px sans-serif`;
                 let textMetrics = ctx.measureText(label);
                 let actualTextWidth = textMetrics.width;
 
-                // 収まるまで縮小
                 while (actualTextWidth > rect_h * 0.8 && fontSize > MIN_FONT_SIZE) {
                     fontSize -= 1 / devicePixelRatio;
                     ctx.font = `${fontSize}px sans-serif`;
@@ -476,10 +808,10 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
                 if (rect_w * 0.5 >= MIN_FONT_SIZE) {
                     ctx.fillText(label, 0, 0);
                 }
-
                 ctx.restore();
             }
 
+            // Perf number
             ctx.font = `${Math.round(W * 0.02)}px Arial`;
             ctx.fillStyle = "#666";
             ctx.textAlign = "center";
@@ -490,40 +822,49 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
             }
         });
 
-        // Y軸グリッド
-        ctx.lineWidth = 1 / devicePixelRatio; // 線幅もスケールに合わせる
+        // Grid
+        ctx.lineWidth = 1 / devicePixelRatio;
         ctx.font = `${Math.round(W * 0.02)}px Arial`;
         ctx.fillStyle = "#666";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
 
-        for (let y = minY; y <= maxY; y += 400) {
+        const gridStart = Math.floor(minY / 400) * 400;
+        const gridEnd = Math.ceil(maxY / 400) * 400;
+
+        for (let y = gridStart; y <= gridEnd; y += 400) {
+            if (y < minY || y > maxY) continue;
             const py = margin.top + drawH - ((y - minY) / (maxY - minY) * drawH);
 
-            if (y === 0) {
-                ctx.strokeStyle = "#60606050";
-            } else {
-                ctx.strokeStyle = "#a0a0a050";
-            }
+            if (y === 0) ctx.strokeStyle = "#60606050";
+            else ctx.strokeStyle = "#a0a0a050";
 
             ctx.beginPath();
             ctx.moveTo(margin.left, py);
             ctx.lineTo(W - margin.right, py);
             ctx.stroke();
-
             ctx.fillText(y, margin.left - 10, py);
         }
 
-        // レートラインの描画
-        const rate_py = margin.top + drawH - (((currentRating - minY) / (maxY - minY)) * drawH);
-        ctx.strokeStyle = "#303030a0";
-        ctx.lineWidth = 3 / devicePixelRatio;
-        ctx.beginPath();
-        ctx.moveTo(margin.left, rate_py);
-        ctx.lineTo(W - margin.right, rate_py);
-        ctx.stroke();
+        // Rate Line
+        if (currentRating >= minY && currentRating <= maxY) {
+            const rate_py = margin.top + drawH - (((currentRating - minY) / (maxY - minY)) * drawH);
+            ctx.strokeStyle = "#303030a0";
+            ctx.lineWidth = 3 / devicePixelRatio;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, rate_py);
+            ctx.lineTo(W - margin.right, rate_py);
+            ctx.stroke();
 
-        // 外枠の描画
+            ctx.lineWidth = 1 / devicePixelRatio;
+            ctx.font = `${Math.round(W * 0.03)}px Arial`;
+            ctx.fillStyle = "#303030a0";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillText(Math.round(currentRating), W - margin.right - 5, rate_py - 5);
+        }
+
+        // Border
         ctx.strokeStyle = "#000";
         ctx.lineWidth = 1 / devicePixelRatio;
         ctx.beginPath();
@@ -535,10 +876,13 @@ AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
         ctx.stroke();
     }
 
-    // 初回実行
-    window.onload = calculateAndDraw;
-    // ウィンドウリサイズ時にキャンバスを再設定・再描画
-    window.onresize = calculateAndDraw;
+    window.onresize = () => {
+        // Redraw at current slider pos
+        if(cachedContests.length > 0) {
+            const slider = document.getElementById('timelineSlider');
+            updateVisualization(new Date(parseInt(slider.value)));
+        }
+    };
 </script>
 
 </body>
