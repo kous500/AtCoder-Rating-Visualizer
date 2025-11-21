@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AHC Rating Visualizer</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
             line-height: 1.6;
@@ -88,16 +91,17 @@
         }
         .stats {
             margin-top: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
+            margin-left: 10px;
+            font-size: 0.9em;
         }
         .note {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #666;
             margin-top: 5px;
+            margin-bottom: 5px;
+            margin-left: 5px;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 </head>
 <body>
 
@@ -107,52 +111,47 @@
     <div class="input-section">
         <h2>Input</h2>
 
-        <label for="refDate">Calculation base date (UTC+9)</label>
+        <label for="refDate">Calculation Base Date (UTC+9)</label>
+        <div class="note">If the date entered is before 2025, the v1 rating system will be applied.</div>
         <input type="date" id="refDate" value="2025-11-17">
 
-        <label for="contestData">Contest data (CSV format)</label>
-        <div class="note">Format: Contest name, weight, performance, end date</div>
+        <label for="contestData">Contest Data</label>
+        <div class="note">Format: Contest name, Weight, Performance, Contest end date</div>
         <textarea id="contestData">
-AHC056,1.0,1996,2025-11-17T00:00:00,
-AHC054,1.0,1244,2025-09-29T00:00:00,
-AHC053,0.5,823,2025-09-13T00:00:00,
-AHC051,1.0,2172,2025-08-11T00:00:00,
-AHC050,0.5,2093,2025-07-06T00:00:00,
-AHC048,1.0,2277,2025-06-09T00:00:00,
-AHC045,1.0,1599,2025-04-07T00:00:00,
-AHC043,1.0,1611,2025-02-24T00:00:00,
-AHC041,0.5,762,2025-01-19T00:00:00,
-AHC040,1.0,1952,2024-12-09T00:00:00,
-AHC039,1.0,555,2024-11-10T00:00:00,
-AHC038,1.0,1121,2024-10-14T00:00:00,
-AHC036,1.0,1281,2024-09-02T00:00:00,
-AHC034,1.0,902,2024-06-16T00:00:00,
-AHC033,1.0,1764,2024-05-27T00:00:00,
-AHC032,1.0,1446,2024-04-07T00:00:00,
-AHC031,1.0,1467,2024-04-01T00:00:00,
-AHC030,1.0,1326,2024-02-19T00:00:00,
-AHC029,1.0,1317,2023-12-26T00:00:00,
-AHC027,1.0,1530,2023-12-10T00:00:00,
-AHC026,1.0,1213,2023-11-05T00:00:00,
-AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
+AHC056,1.0,1996,2025-11-17T00:00:00
+AHC054,1.0,1244,2025-09-29T00:00:00
+AHC053,0.5,823,2025-09-13T00:00:00
+AHC051,1.0,2172,2025-08-11T00:00:00
+AHC050,0.5,2093,2025-07-06T00:00:00
+AHC048,1.0,2277,2025-06-09T00:00:00
+AHC045,1.0,1599,2025-04-07T00:00:00
+AHC043,1.0,1611,2025-02-24T00:00:00
+AHC041,0.5,762,2025-01-19T00:00:00
+AHC040,1.0,1952,2024-12-09T00:00:00
+AHC039,1.0,555,2024-11-10T00:00:00
+AHC038,1.0,1121,2024-10-14T00:00:00
+AHC036,1.0,1281,2024-09-02T00:00:00
+AHC034,1.0,902,2024-06-16T00:00:00
+AHC033,1.0,1764,2024-05-27T00:00:00
+AHC032,1.0,1446,2024-04-07T00:00:00
+AHC031,1.0,1467,2024-04-01T00:00:00
+AHC030,1.0,1326,2024-02-19T00:00:00
+AHC029,1.0,1317,2023-12-26T00:00:00
+AHC027,1.0,1530,2023-12-10T00:00:00
+AHC026,1.0,1213,2023-11-05T00:00:00
+AHC025,1.0,1438,2023-10-22T00:00:00</textarea>
 
         <button onclick="calculateAndDraw()">Run the visualization</button>
-
-        <!---<div class="note" style="margin-top: 15px;">
-            <strong>前提定数:</strong><br>
-            R = 0.8271973364<br>
-            S = 724.4744301<br>
-            Center = 1000
-        </div>--->
     </div>
 
     <div class="output-section">
-        <h2>Visualization results</h2>
-        <div id="resultStats" class="stats">Rating: -</div>
-        <!---<div class="note">
-            数式: \( r = \sum_{i=1}^{m} q_i (R^{s_{i-1}} - R^{s_i}) \)<br>
-            横軸: 累積重み空間 (左 \(1 \to\) 右 \(R^{s_{total}}\) ) / 縦軸: パフォーマンス
-        </div>-->
+        <h2>Visualization Results</h2>
+        <div class="stats">
+            <div id="baseDateResult">Calculation Base Date (UTC+9): -</div>
+            <div id="ratingSystemResult">Rating System: -</div>
+            <div id="ratedMatchesResult">Rated Matches: 0</div>
+            <div id="ratingResult">Rating: -</div>
+        </div>
 
         <div id="canvas-container">
             <canvas id="ratingCanvas"></canvas>
@@ -196,12 +195,29 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
     }
 
     function stringToColor(str) {
-        let hash = 0;
+        let h = 0;
+
+        // 1. 文字列を整数ハッシュに変換 (単純なアキュムレータ)
         for (let i = 0; i < str.length; i++) {
-            hash = (str.charCodeAt(i) * str.charCodeAt(i) * 0xF5A9e214 + str.charCodeAt(i)) % 0x00FFFFFF + ((hash << 5) - hash);
+            // Math.imul は C言語のような32bit乗算を行う
+            h = Math.imul(31, h) + str.charCodeAt(i) | 0;
         }
-        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-        return '#' + '00000'.substring(0, 6 - c.length) + c;
+
+        // 2. ミキシング処理 (Avalanche Effectの適用)
+        // 入力ビットを強く攪拌し、類似した入力から離れた出力値を得る
+        h ^= h >>> 16;
+        h = Math.imul(h, 0x85ebca6b);
+        h ^= h >>> 13;
+        h = Math.imul(h, 0xc2b2ae35);
+        h ^= h >>> 16;
+
+        // 3. RGB成分の抽出
+        // 生成された32bit整数の下位24bitを使用
+        // 負の数を考慮し >>> 0 で符号なし整数化してからマスク処理
+        const colorInt = (h >>> 0) & 0xFFFFFF;
+
+        // 6桁の16進数に変換し、足りない桁を0埋め
+        return '#' + colorInt.toString(16).padStart(6, '0');
     }
 
     function getContrastColor(hex) {
@@ -240,6 +256,7 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
             return;
         }
         const refDate = new Date(refDateVal);
+        const v2_rating = V2_BASE_DATE <= refDate;
 
         // 1. 減衰パフォーマンス計算
         let processedContests = [];
@@ -247,7 +264,7 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
             if (refDate < c.endDate) {
                 return;
             }
-            if (V2_BASE_DATE <= refDate) {
+            if (v2_rating) {
                 const d = getDaysDiff(refDate, c.endDate);
                 const decayedPerf = c.perf + 150 - 100 * (d / 365);
                 processedContests.push({ ...c, decayedPerf });
@@ -257,16 +274,10 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
             }
         });
 
-        //processedContests.sort((a, b) => b.decayedPerf - a.decayedPerf);
-
         // 2. 拡張リストQの作成
         let Q = [];
-        //let rank = 0;
         processedContests.forEach(c => {
-            //const hue = ((1 - Math.pow(1.02, -rank * 8)) * 360) % 360;
-            //const saturation = Math.pow(1.02, -rank * 3) * 0.8 * 100;
-            //const brightness = Math.pow(1.02, -rank * 5) * 0.5 * 100;
-            const color = stringToColor(c.name);//`hsl(${hue}, ${saturation}%, ${brightness}%)`;
+            const color = stringToColor(c.name);
             for (let j = 1; j <= 100; j++) {
                 const q_val = c.decayedPerf - S * Math.log(j);
                 Q.push({
@@ -277,7 +288,6 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
                     color: color,
                 });
             }
-            //rank++;
         });
 
         // 3. ソート
@@ -302,7 +312,7 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
 
         // Y軸スケール決定用
         const maxQValue = Q.length > 0 ? Q[0].q : 0;
-        const maxY = Math.max(0, Math.ceil(maxQValue / 100) * 100 + 100);
+        const maxY = Math.max(0, Math.ceil(maxQValue / 100) * 100 + 200);
         const minY = Math.min(0, Math.floor(minQValue / 400) * 400);
 
         // X軸スケール決定用 (1 -> R^total)
@@ -340,10 +350,15 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
             finalRating = 400 / Math.exp((400 - finalRating) / 400);
         }
 
+        document.getElementById('ratedMatchesResult').innerText = `Rated Matches: ${processedContests.length}`;
         if (Q.length > 0) {
-            document.getElementById('resultStats').innerText = `Rating: ${Math.round(finalRating)}\n(${currentRating})`;
+            document.getElementById('baseDateResult').innerText = `Calculation Base Date (UTC+9): ${refDate.toLocaleDateString()}`;
+            document.getElementById('ratingSystemResult').innerText = `Rating System: ${v2_rating ? 'AHC (v2)' : 'AHC (v1)'}`;
+            document.getElementById('ratingResult').innerText = `Rating: ${Math.round(finalRating)} (${currentRating})`;
         } else {
-            document.getElementById('resultStats').innerText = `Rating: -`;
+            document.getElementById('baseDateResult').innerText = `Calculation Base Date (UTC+9): -`;
+            document.getElementById('ratingSystemResult').innerText = `Rating System: -`;
+            document.getElementById('ratingResult').innerText = `Rating: -`;
         }
 
         // 6. 描画
@@ -444,29 +459,34 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
                 ctx.rotate(-Math.PI / 2);
 
                 // フォントサイズ自動調整
-                // 初期フォントサイズを長方形の幅と高さから柔軟に決定
-                let fontSize = Math.min(rect_h * 2.0, rect_w * 0.4);
-                fontSize = Math.max(fontSize, MIN_FONT_SIZE); // 最小値を保証
+                let fontSize = Math.max(rect_w * 0.5, MIN_FONT_SIZE);
 
                 ctx.font = `${fontSize}px sans-serif`;
                 let textMetrics = ctx.measureText(label);
                 let actualTextWidth = textMetrics.width;
-                let actualTextHeight = fontSize; // 概算
 
                 // 収まるまで縮小
-                while ((actualTextWidth > rect_h * 0.9 || actualTextHeight > rect_w * 0.9) && fontSize > MIN_FONT_SIZE) {
+                while (actualTextWidth > rect_h * 0.8 && fontSize > MIN_FONT_SIZE) {
                     fontSize -= 1 / devicePixelRatio;
                     ctx.font = `${fontSize}px sans-serif`;
                     textMetrics = ctx.measureText(label);
                     actualTextWidth = textMetrics.width;
-                    actualTextHeight = fontSize;
                 }
 
-                if (fontSize >= MIN_FONT_SIZE) {
+                if (rect_w * 0.5 >= MIN_FONT_SIZE) {
                     ctx.fillText(label, 0, 0);
                 }
 
                 ctx.restore();
+            }
+
+            ctx.font = `${Math.round(W * 0.02)}px Arial`;
+            ctx.fillStyle = "#666";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            const textMetrics = ctx.measureText(Math.round(rect.y));
+            if (textMetrics.width <= rect_w * 0.9) {
+                ctx.fillText(Math.round(rect.y), px_screen_left + rect_w / 2, py - 5);
             }
         });
 
@@ -496,8 +516,8 @@ AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
 
         // レートラインの描画
         const rate_py = margin.top + drawH - (((currentRating - minY) / (maxY - minY)) * drawH);
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 2 / devicePixelRatio;
+        ctx.strokeStyle = "#303030a0";
+        ctx.lineWidth = 3 / devicePixelRatio;
         ctx.beginPath();
         ctx.moveTo(margin.left, rate_py);
         ctx.lineTo(W - margin.right, rate_py);
