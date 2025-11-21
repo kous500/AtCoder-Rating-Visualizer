@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHC Rating Visualizer</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .output-section {
+            flex: 2;
+            min-width: 300px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #canvas-container {
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid #eee;
+            margin-top: 20px;
+            position: relative;
+        }
+        canvas {
+            background-color: #fff;
+            display: block;
+            width: 100%; /* 論理サイズは100%で維持 */
+            height: auto;
+        }
+        .stats {
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .note {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body>
+
+<h1>AHC Rating Visualizer</h1>
+
+<div class="container">
+    <div class="input-section">
+        <h2>Input</h2>
+
+        <label for="refDate">Calculation base date (UTC+9)</label>
+        <input type="date" id="refDate" value="2025-11-17">
+
+        <label for="contestData">Contest data (CSV format)</label>
+        <div class="note">Format: Contest name, weight, performance, end date</div>
+        <textarea id="contestData">
+AHC056,1.0,1996,2025-11-17T00:00:00,
+AHC054,1.0,1244,2025-09-29T00:00:00,
+AHC053,0.5,823,2025-09-13T00:00:00,
+AHC051,1.0,2172,2025-08-11T00:00:00,
+AHC050,0.5,2093,2025-07-06T00:00:00,
+AHC048,1.0,2277,2025-06-09T00:00:00,
+AHC045,1.0,1599,2025-04-07T00:00:00,
+AHC043,1.0,1611,2025-02-24T00:00:00,
+AHC041,0.5,762,2025-01-19T00:00:00,
+AHC040,1.0,1952,2024-12-09T00:00:00,
+AHC039,1.0,555,2024-11-10T00:00:00,
+AHC038,1.0,1121,2024-10-14T00:00:00,
+AHC036,1.0,1281,2024-09-02T00:00:00,
+AHC034,1.0,902,2024-06-16T00:00:00,
+AHC033,1.0,1764,2024-05-27T00:00:00,
+AHC032,1.0,1446,2024-04-07T00:00:00,
+AHC031,1.0,1467,2024-04-01T00:00:00,
+AHC030,1.0,1326,2024-02-19T00:00:00,
+AHC029,1.0,1317,2023-12-26T00:00:00,
+AHC027,1.0,1530,2023-12-10T00:00:00,
+AHC026,1.0,1213,2023-11-05T00:00:00,
+AHC025,1.0,1438,2023-10-22T00:00:00,</textarea>
+
+        <button onclick="calculateAndDraw()">Run the visualization</button>
+
+        <!---<div class="note" style="margin-top: 15px;">
+            <strong>前提定数:</strong><br>
+            R = 0.8271973364<br>
+            S = 724.4744301<br>
+            Center = 1000
+        </div>--->
+    </div>
+
+    <div class="output-section">
+        <h2>Visualization results</h2>
+        <div id="resultStats" class="stats">Rating: -</div>
+        <!---<div class="note">
+            数式: \( r = \sum_{i=1}^{m} q_i (R^{s_{i-1}} - R^{s_i}) \)<br>
+            横軸: 累積重み空間 (左 \(1 \to\) 右 \(R^{s_{total}}\) ) / 縦軸: パフォーマンス
+        </div>-->
+
+        <div id="canvas-container">
+            <canvas id="ratingCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Constants
+    const R = 0.8271973364;
+    const S = 724.4744301;
+    const V2_BASE_DATE = new Date("2025-01-01T00:00:00");
+
+    function parseInput() {
+        const rawText = document.getElementById('contestData').value.trim();
+        const lines = rawText.split('\n');
+        const contests = [];
+
+        for (let line of lines) {
+            line = line.trim();
+            if (!line) continue;
+            const parts = line.split(',').map(s => s.trim());
+            if (parts.length < 4) continue;
+
+            const name = parts[0];
+            const weight = parseFloat(parts[1]);
+            const perf = parseFloat(parts[2]);
+            const endDateStr = parts[3];
+            const endDate = new Date(endDateStr);
+
+            if (!isNaN(weight) && !isNaN(perf) && endDate instanceof Date && !isNaN(endDate)) {
+                contests.push({ name, weight, perf, endDate });
+            }
+        }
+        return contests;
+    }
+
+    function getDaysDiff(fromDate, toDate) {
+        const diffTime = fromDate - toDate;
+        return diffTime / (1000 * 60 * 60 * 24);
+    }
+
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = (str.charCodeAt(i) * str.charCodeAt(i) * 0xF5A9e214 + str.charCodeAt(i)) % 0x00FFFFFF + ((hash << 5) - hash);
+        }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return '#' + '00000'.substring(0, 6 - c.length) + c;
+    }
+
+    function getContrastColor(hex) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? 'black' : 'white';
+    }
+
+    function getRatingColor(rate) {
+        if (2800 <= rate) {
+            return "#FFB2B2";
+        } else if (2400 <= rate) {
+            return "#FFD9B2";
+        } else if (2000 <= rate) {
+            return "#ECECB2";
+        } else if (1600 <= rate) {
+            return "#B2B2FF";
+        } else if (1200 <= rate) {
+            return "#B2ECEC";
+        } else if (800 <= rate) {
+            return "#B2D9B2";
+        } else if (400 <= rate) {
+            return "#D9C5B2";
+        } else {
+            return "#D9D9D9";
+        }
+    }
+
+    function calculateAndDraw() {
+        const contests = parseInput();
+        const refDateVal = document.getElementById('refDate').value;
+        if (!refDateVal) {
+            alert("計算基準日を入力してください。");
+            return;
+        }
+        const refDate = new Date(refDateVal);
+
+        // 1. 減衰パフォーマンス計算
+        let processedContests = [];
+        contests.forEach(c => {
+            if (refDate < c.endDate) {
+                return;
+            }
+            if (V2_BASE_DATE <= refDate) {
+                const d = getDaysDiff(refDate, c.endDate);
+                const decayedPerf = c.perf + 150 - 100 * (d / 365);
+                processedContests.push({ ...c, decayedPerf });
+            } else {
+                const decayedPerf = c.perf;
+                processedContests.push({ ...c, decayedPerf });
+            }
+        });
+
+        //processedContests.sort((a, b) => b.decayedPerf - a.decayedPerf);
+
+        // 2. 拡張リストQの作成
+        let Q = [];
+        //let rank = 0;
+        processedContests.forEach(c => {
+            //const hue = ((1 - Math.pow(1.02, -rank * 8)) * 360) % 360;
+            //const saturation = Math.pow(1.02, -rank * 3) * 0.8 * 100;
+            //const brightness = Math.pow(1.02, -rank * 5) * 0.5 * 100;
+            const color = stringToColor(c.name);//`hsl(${hue}, ${saturation}%, ${brightness}%)`;
+            for (let j = 1; j <= 100; j++) {
+                const q_val = c.decayedPerf - S * Math.log(j);
+                Q.push({
+                    q: q_val,
+                    w: c.weight,
+                    name: c.name,
+                    j: j,
+                    color: color,
+                });
+            }
+            //rank++;
+        });
+
+        // 3. ソート
+        Q.sort((a, b) => b.q - a.q);
+
+        // 4. レーティング計算と長方形データの作成
+        let currentRating = 0;
+        let s_prev = 0;
+        let si = 0;
+        let rectangles = [];
+        let minQValue = 0;
+
+        for (let i = 0; i < Q.length; i++) {
+            const item = Q[i];
+            const s_curr = si + item.w;
+            const r_pow = Math.pow(R, s_curr);
+            if (r_pow > 0.01) {
+                minQValue = item.q;
+            }
+            si = s_curr;
+        }
+
+        // Y軸スケール決定用
+        const maxQValue = Q.length > 0 ? Q[0].q : 0;
+        const maxY = Math.max(0, Math.ceil(maxQValue / 100) * 100 + 100);
+        const minY = Math.min(0, Math.floor(minQValue / 400) * 400);
+
+        // X軸スケール決定用 (1 -> R^total)
+        let s_total = 0;
+        for (const item of Q) {
+            s_total += item.w;
+        }
+        const minXLogical = Math.pow(R, s_total);
+
+        for (let i = 0; i < Q.length; i++) {
+            const item = Q[i];
+            const s_curr = s_prev + item.w;
+
+            const r_pow_prev = Math.pow(R, s_prev); // 大きい値 (開始点)
+            const r_pow_curr = Math.pow(R, s_curr); // 小さい値 (終了点)
+
+            const term = item.q * (r_pow_prev - r_pow_curr);
+            currentRating += term;
+
+            rectangles.push({
+                x_start: r_pow_prev,
+                x_end: r_pow_curr,  
+                y: item.q,
+                name: item.name,
+                j: item.j,
+                color: item.color
+            });
+
+            s_prev = s_curr;
+        }
+
+        // 5. レーティング補正
+        let finalRating = currentRating;
+        if (finalRating < 400) {
+            finalRating = 400 / Math.exp((400 - finalRating) / 400);
+        }
+
+        if (Q.length > 0) {
+            document.getElementById('resultStats').innerText = `Rating: ${Math.round(finalRating)}\n(${currentRating})`;
+        } else {
+            document.getElementById('resultStats').innerText = `Rating: -`;
+        }
+
+        // 6. 描画
+        drawCanvas(rectangles, minY, maxY, minXLogical, currentRating);
+    }
+
+    function drawCanvas(rectangles, minY, maxY, minXLogical, currentRating) {
+        const canvas = document.getElementById('ratingCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // HiDPI (Retina) ディスプレイ対応
+        const devicePixelRatio = window.devicePixelRatio || 1;
+
+        // キャンバスのwidth/heightを動的に設定し、正方形にする
+        const containerWidth = canvas.parentElement.clientWidth;
+        const LOGICAL_CANVAS_SIZE = containerWidth; // 論理サイズ (CSSピクセル)
+
+        canvas.style.width = `${LOGICAL_CANVAS_SIZE}px`;
+        canvas.style.height = `${LOGICAL_CANVAS_SIZE}px`;
+
+        // 物理ピクセル数でキャンバスの属性を設定し、ぼやけを解消
+        canvas.width = LOGICAL_CANVAS_SIZE * devicePixelRatio;
+        canvas.height = LOGICAL_CANVAS_SIZE * devicePixelRatio;
+
+        // 描画コンテキストをスケールアップ
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+
+        // ここから下のW, Hは論理サイズとして扱う
+        const W = LOGICAL_CANVAS_SIZE;
+        const H = LOGICAL_CANVAS_SIZE;
+        
+        ctx.clearRect(0, 0, W, H);
+
+        if (rectangles.length === 0) return;
+
+        const margin = { top: H * 0.08, right: W * 0.05, bottom: H * 0.08, left: W * 0.1 }; // マージンを比率で指定
+        const drawW = W - margin.left - margin.right;
+        const drawH = H - margin.top - margin.bottom;
+
+        // X軸変換係数: 論理空間 [minXLogical, 1] を 画面空間 [0, drawW] にマッピング
+        // 左端(0) が 論理1.0、右端(drawW) が 論理minXLogical となるように配置
+        const xScale = drawW / (1 - minXLogical);
+
+        // 背景カラー
+        for (let y = minY; y < maxY; y += 400) {
+            ctx.fillStyle = getRatingColor(y);
+            ctx.fillRect(margin.left, margin.top, drawW, drawH - ((y - minY) / (maxY - minY) * drawH));
+        }
+
+        // 長方形描画
+        rectangles.forEach(rect => {
+            const px_start_logical = rect.x_start;
+            const px_end_logical = rect.x_end;
+
+            // 座標変換
+            const px_screen_left = (1 - px_start_logical) * xScale + margin.left;
+            const px_screen_right = (1 - px_end_logical) * xScale + margin.left;
+
+            const rect_w = px_screen_right - px_screen_left;
+            const rect_h = ((rect.y - minY) / (maxY - minY)) * drawH;
+            const py = margin.top + drawH - rect_h;
+
+            if (rect_h <= 0) {
+                return;
+            }
+
+            // 塗りつぶし
+            ctx.fillStyle = rect.color;
+            ctx.fillRect(px_screen_left, py, rect_w, rect_h);
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.lineWidth = 1 / devicePixelRatio; // 枠線もスケールに合わせる
+            ctx.strokeRect(px_screen_left, py, rect_w, rect_h);
+
+            // ラベル描画 (縦書き・自動調整)
+            const label = `${rect.name} (${rect.j})`;
+
+            // 描画領域が極端に小さい場合はテキストを描画しない
+            // テキストの最小表示サイズもデバイスピクセル比率で調整
+            const MIN_FONT_SIZE = 10 / devicePixelRatio; // 最小フォントサイズ
+
+            if (rect_w / devicePixelRatio > MIN_FONT_SIZE) {
+                ctx.save();
+
+                // クリップ領域設定（長方形からはみ出さないようにする）
+                ctx.beginPath();
+                ctx.rect(px_screen_left, py, rect_w, rect_h);
+                ctx.clip();
+
+                ctx.fillStyle = getContrastColor(rect.color);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                // 90度回転設定
+                const cx = px_screen_left + rect_w / 2;
+                const cy = py + rect_h / 2;
+
+                ctx.translate(cx, cy);
+                ctx.rotate(-Math.PI / 2);
+
+                // フォントサイズ自動調整
+                // 初期フォントサイズを長方形の幅と高さから柔軟に決定
+                let fontSize = Math.min(rect_h * 2.0, rect_w * 0.4);
+                fontSize = Math.max(fontSize, MIN_FONT_SIZE); // 最小値を保証
+
+                ctx.font = `${fontSize}px sans-serif`;
+                let textMetrics = ctx.measureText(label);
+                let actualTextWidth = textMetrics.width;
+                let actualTextHeight = fontSize; // 概算
+
+                // 収まるまで縮小
+                while ((actualTextWidth > rect_h * 0.9 || actualTextHeight > rect_w * 0.9) && fontSize > MIN_FONT_SIZE) {
+                    fontSize -= 1 / devicePixelRatio;
+                    ctx.font = `${fontSize}px sans-serif`;
+                    textMetrics = ctx.measureText(label);
+                    actualTextWidth = textMetrics.width;
+                    actualTextHeight = fontSize;
+                }
+
+                if (fontSize >= MIN_FONT_SIZE) {
+                    ctx.fillText(label, 0, 0);
+                }
+
+                ctx.restore();
+            }
+        });
+
+        // Y軸グリッド
+        ctx.lineWidth = 1 / devicePixelRatio; // 線幅もスケールに合わせる
+        ctx.font = `${Math.round(W * 0.02)}px Arial`;
+        ctx.fillStyle = "#666";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+
+        for (let y = minY; y <= maxY; y += 400) {
+            const py = margin.top + drawH - ((y - minY) / (maxY - minY) * drawH);
+
+            if (y === 0) {
+                ctx.strokeStyle = "#60606050";
+            } else {
+                ctx.strokeStyle = "#a0a0a050";
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(margin.left, py);
+            ctx.lineTo(W - margin.right, py);
+            ctx.stroke();
+
+            ctx.fillText(y, margin.left - 10, py);
+        }
+
+        // レートラインの描画
+        const rate_py = margin.top + drawH - (((currentRating - minY) / (maxY - minY)) * drawH);
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 2 / devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, rate_py);
+        ctx.lineTo(W - margin.right, rate_py);
+        ctx.stroke();
+
+        // 外枠の描画
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1 / devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, margin.top);
+        ctx.lineTo(margin.left, margin.top + drawH);
+        ctx.lineTo(W - margin.right, margin.top + drawH);
+        ctx.lineTo(W - margin.right, margin.top);
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    // 初回実行
+    window.onload = calculateAndDraw;
+    // ウィンドウリサイズ時にキャンバスを再設定・再描画
+    window.onresize = calculateAndDraw;
+</script>
+
+</body>
+</html>
