@@ -242,11 +242,12 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             <div class="control-row" style="justify-content: flex-end;">
                 <label style="margin:0; margin-right:5px; font-size:0.8em;">Speed:</label>
                 <select id="speedSelect" class="speed-select">
-                    <option value="1" selected>x1 (1 day/frame)</option>
-                    <option value="1.5">x1.5</option>
+                    <option value="1">x1 (1 hour/frame)</option>
                     <option value="2">x2</option>
-                    <option value="3">x3</option>
                     <option value="4">x4</option>
+                    <option value="8">x8</option>
+                    <option value="24" selected>x24 (1 day/frame)</option>
+                    <option value="48">x48 (2 day/frame)</option>
                 </select>
             </div>
         </div>
@@ -519,8 +520,10 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             const color = stringToColor(c.name);
             for (let j = 1; j <= 100; j++) {
                 const q_val = c.decayedPerf - S * Math.log(j);
+                const bef_q_val = c.perf - S * Math.log(j);
                 Q.push({
                     q: q_val,
+                    bef_q: bef_q_val,
                     w: c.weight,
                     name: c.name,
                     j: j,
@@ -536,11 +539,12 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
         let s_prev = 0;
         let si = 0;
         let rectangles = [];
-        let minQValue = 0;
+        let maxQValue = Q.length > 0 ? Q[0].q : 0;
 
         // Range detection
         for (let i = 0; i < Q.length; i++) {
             const item = Q[i];
+            maxQValue = Math.max(maxQValue, item.bef_q);
             const s_curr = si + item.w;
             const r_pow = Math.pow(R, s_curr);
             if (r_pow > 0.01) {
@@ -549,9 +553,8 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             si = s_curr;
         }
 
-        const maxQValue = Q.length > 0 ? Q[0].q : 0;
-        const maxY = Math.max(0, Math.ceil(maxQValue / 100) * 100 + 200);
         const minY = Math.min(0, Math.floor(minQValue / 400) * 400);
+        const maxY = Math.max(0, Math.ceil(((maxQValue - minY) * 1.1 + minY) / 100) * 100);
 
         let s_total = 0;
         for (const item of Q) s_total += item.w;
@@ -570,6 +573,7 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
                 x_start: r_pow_prev,
                 x_end: r_pow_curr,  
                 y: item.q,
+                y2: item.bef_q,
                 name: item.name,
                 j: item.j,
                 color: item.color
@@ -632,11 +636,8 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
         const slider = document.getElementById('timelineSlider');
         const speedVal = parseInt(document.getElementById('speedSelect').value);
         
-        // Advance time (ms)
-        // Speed is days per frame roughly
-        // 1 day = 86400000 ms
         let current = parseInt(slider.value);
-        let next = current + (speedVal * 86400000);
+        let next = current + (speedVal * 60 * 60 * 1000);
         
         if (next >= timelineEnd) {
             next = timelineEnd;
@@ -763,13 +764,15 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
 
             const rect_w = px_screen_right - px_screen_left;
             const rect_h = ((rect.y - minY) / (maxY - minY)) * drawH;
+            const rect_h2 = ((rect.y2 - minY) / (maxY - minY)) * drawH;
             const py = margin.top + drawH - rect_h;
+            const py2 = margin.top + drawH - rect_h2;
 
             if (rect_h <= 0) return;
 
             ctx.fillStyle = rect.color;
             ctx.fillRect(px_screen_left, py, rect_w, rect_h);
-            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.strokeStyle = "rgba(0.4,0.4,0.4,0.2)";
             ctx.lineWidth = 1 / devicePixelRatio;
             ctx.strokeRect(px_screen_left, py, rect_w, rect_h);
 
@@ -821,6 +824,24 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
                 ctx.fillText(Math.round(rect.y), px_screen_left + rect_w / 2, py - 5);
             }
         });
+        rectangles.forEach(rect => {
+            if (rect.j != 1) return;
+            const px_start_logical = rect.x_start;
+            const px_end_logical = rect.x_end;
+
+            const px_screen_left = (1 - px_start_logical) * xScale + margin.left;
+            const px_screen_right = (1 - px_end_logical) * xScale + margin.left;
+
+            const rect_w = px_screen_right - px_screen_left;
+            const rect_h2 = ((rect.y2 - minY) / (maxY - minY)) * drawH;
+            const py2 = margin.top + drawH - rect_h2;
+
+            if (rect_h2 > 0) {
+                ctx.strokeStyle = "rgb(0.4,0.4,0.4)";
+                ctx.lineWidth = 1 / devicePixelRatio;
+                ctx.strokeRect(px_screen_left, py2, rect_w, rect_h2);
+            }
+        });
 
         // Grid
         ctx.lineWidth = 1 / devicePixelRatio;
@@ -857,11 +878,11 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             ctx.stroke();
 
             ctx.lineWidth = 1 / devicePixelRatio;
-            ctx.font = `${Math.round(W * 0.03)}px Arial`;
-            ctx.fillStyle = "#303030a0";
+            ctx.font = `${Math.round(W * 0.035)}px Arial`;
+            ctx.fillStyle = "#303030d0";
             ctx.textAlign = "right";
             ctx.textBaseline = "alphabetic";
-            ctx.fillText(Math.round(currentRating), W - margin.right - 5, rate_py - 5);
+            ctx.fillText(`Rate: ${Math.round(currentRating)}`, W - margin.right - 5, rate_py - 5);
         }
 
         // Border
