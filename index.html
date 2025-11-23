@@ -857,8 +857,7 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             if (y < minY || y > maxY) continue;
             const py = margin.top + drawH - ((y - minY) / (maxY - minY) * drawH);
 
-            if (y === 0) ctx.strokeStyle = "#60606050";
-            else ctx.strokeStyle = "#a0a0a050";
+            ctx.strokeStyle = "#60606050";
 
             ctx.beginPath();
             ctx.moveTo(margin.left, py);
