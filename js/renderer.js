@@ -108,7 +108,7 @@ function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, canv
         // Perf Number
         let perfFontSize = Math.max(rect_w * 0.2, MIN_FONT_SIZE);
         ctx.font = `${perfFontSize}px Arial`;
-        ctx.fillStyle = "#666";
+        ctx.fillStyle = "#555";
         ctx.textAlign = "center";
         ctx.textBaseline = "alphabetic";
         const textMetrics = ctx.measureText(Math.round(rect.y));
@@ -172,8 +172,8 @@ function drawLabel(ctx, rect, x, y, w, h, minFont, canvasScale) {
 
 function drawGrid(ctx, minY, maxY, W, margin, drawH, canvasScale) {
     ctx.lineWidth = 1 * canvasScale;
-    ctx.font = `${Math.round(W * 0.02)}px Arial`;
-    ctx.fillStyle = "#666";
+    ctx.font = `${12 * canvasScale}px Arial`;
+    ctx.fillStyle = "#555";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
 
@@ -204,7 +204,7 @@ function drawRatingLine(ctx, currentRating, minY, maxY, W, margin, drawH, canvas
         ctx.stroke();
 
         ctx.lineWidth = 1 * canvasScale;
-        ctx.font = `${Math.round(W * 0.035)}px Arial`;
+        ctx.font = `${25 * canvasScale}px Arial`;
         ctx.fillStyle = "#303030d0";
         ctx.textAlign = "right";
         ctx.textBaseline = "alphabetic";
