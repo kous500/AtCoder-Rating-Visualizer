@@ -1,4 +1,4 @@
-const ATCODER_PROXY_URL = "https://script.google.com/macros/s/AKfycby-CKUsGoe7YZBeIf9FMwvCK6JIfqnVkN-8764iNkRApGPns158Q6vJPxpDdnGfsDXU/exec";
+const ATCODER_PROXY_URL = "https://script.google.com/macros/s/AKfycbzKzmzBtTyrZpFyabeWHrIh_7Rwq9TtUF5w41VlMle-Rs9WA10c7Bklf_Z_c1R-ZcHI/exec";
 const ATCODER_PROBLEMS_URL = "https://kenkoooo.com/atcoder/resources/contests.json";
 
 export async function fetchAtCoderData(userId) {
