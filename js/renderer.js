@@ -81,7 +81,7 @@ function drawBackgroundBands(ctx, minY, maxY, margin, drawW, drawH) {
 }
 
 function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, canvasScale) {
-    const MIN_FONT_SIZE = 10 * canvasScale;
+    const MIN_FONT_SIZE = 8 * canvasScale;
 
     rectangles.forEach(rect => {
         const px_screen_left = (1 - rect.x_start) * xScale + margin.left;
