@@ -156,16 +156,13 @@ footer a:hover {
 
 /* Animation Controls */
 .animation-controls {
-    background: #eef2f7;
     padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    border: 1px solid #dae0e5;
+    margin-top: 10px;
 }
 .control-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     margin-bottom: 10px;
     flex-wrap: wrap;
 }
@@ -212,7 +209,6 @@ footer a:hover {
     font-family: monospace;
     font-weight: bold;
     font-size: 1.1em;
-    min-width: 110px;
     text-align: center;
 }
 .speed-select {

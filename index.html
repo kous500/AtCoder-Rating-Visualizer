@@ -60,26 +60,6 @@ AHC056,1,1996,2025-11-17T10:00:00</textarea>-->
 
     <section class="output-section">
         <h2>Visualization</h2>
-        
-        <div class="animation-controls">
-            <div class="control-row">
-                <button id="playPauseBtn" aria-label="Play/Pause"></button>
-                <div id="currentDateLabel">YYYY-MM-DD</div>
-                <input type="range" id="timelineSlider" min="0" max="100" value="100">
-            </div>
-            <div class="control-row" style="justify-content: flex-end;">
-                <label style="margin:0; margin-right:5px; font-size:0.8em;">Speed:</label>
-                <select id="speedSelect" class="speed-select">
-                    <option value="1">1 hour/frame</option>
-                    <option value="2">2 hour/frame</option>
-                    <option value="4">4 hour/frame</option>
-                    <option value="8">8 hour/frame</option>
-                    <option value="24" selected>1 day/frame</option>
-                    <option value="48">2 day/frame</option>
-                    <option value="96">4 day/frame</option>
-                </select>
-            </div>
-        </div>
 
         <div class="stats-grid">
             <div class="stat-item">
@@ -102,7 +82,7 @@ AHC056,1,1996,2025-11-17T10:00:00</textarea>-->
                 <span class="stat-label">Unadjusted Rating</span>
                 <span class="stat-value" id="statRawRating">-</span>
             </div>
-            <div class="stat-item" style="grid-column: span 2;">
+            <div class="stat-item">
                 <span class="stat-label">Rating</span>
                 <span class="stat-value" id="statRating">-</span>
             </div>
@@ -110,6 +90,26 @@ AHC056,1,1996,2025-11-17T10:00:00</textarea>-->
 
         <div id="canvas-container">
             <canvas id="ratingCanvas"></canvas>
+        </div>
+
+        <div class="animation-controls">
+            <div class="control-row">
+                <button id="playPauseBtn" aria-label="Play/Pause"></button>
+                <div id="currentDateLabel">YYYY-MM-DD</div>
+                <input type="range" id="timelineSlider" min="0" max="100" value="100">
+            </div>
+            <div class="control-row" style="justify-content: flex-end;">
+                <label style="margin:0; margin-right:5px; font-size:0.8em;">Speed:</label>
+                <select id="speedSelect" class="speed-select">
+                    <option value="1">1 hour/frame</option>
+                    <option value="2">2 hour/frame</option>
+                    <option value="4">4 hour/frame</option>
+                    <option value="8">8 hour/frame</option>
+                    <option value="24" selected>1 day/frame</option>
+                    <option value="48">2 day/frame</option>
+                    <option value="96">4 day/frame</option>
+                </select>
+            </div>
         </div>
     </section>
 </div>
