@@ -10,7 +10,7 @@ export function drawRatingGraph(canvasId, data, currentRating) {
 
     // Viewport Calculations
     const minY = Math.min(0, Math.floor(minQValue / 400) * 400);
-    const maxY = Math.max(0, Math.ceil(((maxQValue - minY) * 1.1 + minY) / 100) * 100);
+    const maxY = Math.max(0, Math.ceil((maxQValue + (maxQValue - minY) * 0.1) / 100) * 100);
 
     const devicePixelRatio = window.devicePixelRatio || 1;
     const containerWidth = canvas.parentElement.clientWidth;
@@ -113,8 +113,14 @@ function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devi
         if (textMetrics.width <= rect_w * 0.9) {
             ctx.fillText(Math.round(rect.y), px_screen_left + rect_w / 2, py - 5);
         }
+    });
 
-        // J=1 extra border
+    // J=1 extra border
+    rectangles.forEach(rect => {
+        const px_screen_left = (1 - rect.x_start) * xScale + margin.left;
+        const px_screen_right = (1 - rect.x_end) * xScale + margin.left;
+        const rect_w = px_screen_right - px_screen_left;
+
         if (rect.j === 1) {
             const rect_h2 = ((rect.y2 - minY) / (maxY - minY)) * drawH;
             const py2 = margin.top + drawH - rect_h2;
@@ -124,7 +130,7 @@ function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devi
                 ctx.strokeRect(px_screen_left, py2, rect_w, rect_h2);
             }
         }
-    });
+    })
 }
 
 function drawLabel(ctx, rect, x, y, w, h, minFont, dpr) {
