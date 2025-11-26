@@ -103,6 +103,29 @@ canvas {
     margin-bottom: 8px;
 }
 
+/* Footer Styles */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px 0;
+    border-top: 1px solid #e0e0e0;
+    color: #666;
+    font-size: 0.9em;
+}
+footer p {
+    margin: 0;
+}
+footer a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s;
+    word-break: break-all;
+}
+footer a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
 /* Stats Styles */
 .stats-grid {
     display: grid;
