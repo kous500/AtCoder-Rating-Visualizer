@@ -242,12 +242,13 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             <div class="control-row" style="justify-content: flex-end;">
                 <label style="margin:0; margin-right:5px; font-size:0.8em;">Speed:</label>
                 <select id="speedSelect" class="speed-select">
-                    <option value="1">x1 (1 hour/frame)</option>
-                    <option value="2">x2</option>
-                    <option value="4">x4</option>
-                    <option value="8">x8</option>
-                    <option value="24" selected>x24 (1 day/frame)</option>
-                    <option value="48">x48 (2 day/frame)</option>
+                    <option value="1">1 hour/frame</option>
+                    <option value="2">2 hour/frame</option>
+                    <option value="4">4 hour/frame</option>
+                    <option value="8">8 hour/frame</option>
+                    <option value="24" selected>1 day/frame</option>
+                    <option value="48">2 day/frame</option>
+                    <option value="96">4 day/frame</option>
                 </select>
             </div>
         </div>
@@ -600,8 +601,8 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
 
         // Username manual fallback
         if(document.getElementById('statUsername').innerText === '-') {
-             const inputId = document.getElementById('atcoderId').value;
-             if(inputId) document.getElementById('statUsername').innerText = inputId + " (Manual)";
+            const inputId = document.getElementById('atcoderId').value;
+            if(inputId) document.getElementById('statUsername').innerText = inputId + " (Manual)";
         }
 
         drawCanvas(rectangles, minY, maxY, minXLogical, currentRating);
@@ -646,7 +647,7 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
         }
 
         slider.value = next;
-        updateVisualization(new Date(next));
+        updateVisualization(toMidnight(new Date(next)));
 
         if (isPlaying) {
             animationReqId = requestAnimationFrame(loop);
@@ -815,7 +816,8 @@ AHC056, 1, 1996, 2025-11-17T10:00:00</textarea>
             }
 
             // Perf number
-            ctx.font = `${Math.round(W * 0.02)}px Arial`;
+            let perfFontSize = Math.max(rect_w * 0.2, MIN_FONT_SIZE);
+            ctx.font = `${perfFontSize}px Arial`;
             ctx.fillStyle = "#666";
             ctx.textAlign = "center";
             ctx.textBaseline = "alphabetic";
