@@ -140,16 +140,18 @@ function updateVisualization(currentDate) {
 
 // Animation Loop
 function toggleAnimation() {
+    const btn = document.getElementById('playPauseBtn');
+
     if (isPlaying) {
         isPlaying = false;
         cancelAnimationFrame(animationReqId);
-        playPauseBtn.innerText = "▶";
+        btn.classList.remove('playing');
     } else {
         if (parseInt(timelineSlider.value) >= parseInt(timelineSlider.max)) {
             timelineSlider.value = timelineSlider.min;
         }
         isPlaying = true;
-        playPauseBtn.innerText = "⏸";
+        btn.classList.add('playing');
         loop();
     }
 }
@@ -164,7 +166,8 @@ function loop() {
     if (next >= timelineEnd) {
         next = timelineEnd;
         isPlaying = false;
-        playPauseBtn.innerText = "▶";
+        
+        document.getElementById('playPauseBtn').classList.remove('playing');
     }
 
     timelineSlider.value = next;

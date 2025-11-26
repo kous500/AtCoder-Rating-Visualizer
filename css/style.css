@@ -146,18 +146,46 @@ canvas {
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
 }
-.control-row:last-child {
+#playPauseBtn {
+    width: 44px;
+    height: 40px;
+    min-width: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0;
+}
+#playPauseBtn::after {
+    content: '';
+    display: block;
+    box-sizing: border-box;
+    transition: all 0.1s ease;
+}
+#playPauseBtn:not(.playing)::after {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 8px 0 8px 14px;
+    border-color: transparent transparent transparent white;
+    transform: translateX(2px);
+}
+#playPauseBtn.playing::after {
+    width: 14px;
+    height: 16px;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 4px solid white;
+    border-right: 4px solid white;
+    background-color: transparent;
+    transform: translateX(0);
 }
 #timelineSlider {
     flex-grow: 1;
     cursor: pointer;
-}
-#playPauseBtn {
-    width: auto;
-    margin-bottom: 0;
-    min-width: 50px;
+    min-width: 200px;
 }
 #currentDateLabel {
     font-family: monospace;
