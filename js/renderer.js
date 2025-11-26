@@ -37,21 +37,23 @@ export function drawRatingGraph(canvasId, data, currentRating) {
     const drawH = H - margin.top - margin.bottom;
     const xScale = drawW / (1 - minXLogical);
 
+    const canvasScale = LOGICAL_CANVAS_SIZE / 638;
+
     // Draw Background Bands
     drawBackgroundBands(ctx, minY, maxY, margin, drawW, drawH);
 
     // Draw Rectangles
-    drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devicePixelRatio);
+    drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, canvasScale);
 
     // Draw Grid
-    drawGrid(ctx, minY, maxY, W, margin, drawH, devicePixelRatio);
+    drawGrid(ctx, minY, maxY, W, margin, drawH, canvasScale);
 
     // Draw Rating Line
-    drawRatingLine(ctx, currentRating, minY, maxY, W, margin, drawH, devicePixelRatio);
+    drawRatingLine(ctx, currentRating, minY, maxY, W, margin, drawH, canvasScale);
 
     // Draw Border
     ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1 / devicePixelRatio;
+    ctx.lineWidth = 1 * canvasScale;
     ctx.strokeRect(margin.left, margin.top, drawW, drawH);
 }
 
@@ -59,7 +61,7 @@ function drawEmptyState(ctx, W, H) {
     ctx.fillStyle = "#666";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("No contests evaluated yet.", W/2, H/2);
+    ctx.fillText("No contests evaluated yet.", W / 2, H / 2);
 }
 
 function drawBackgroundBands(ctx, minY, maxY, margin, drawW, drawH) {
@@ -78,8 +80,8 @@ function drawBackgroundBands(ctx, minY, maxY, margin, drawW, drawH) {
     }
 }
 
-function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devicePixelRatio) {
-    const MIN_FONT_SIZE = 10 / devicePixelRatio;
+function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, canvasScale) {
+    const MIN_FONT_SIZE = 10 * canvasScale;
 
     rectangles.forEach(rect => {
         const px_screen_left = (1 - rect.x_start) * xScale + margin.left;
@@ -94,13 +96,13 @@ function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devi
         // Fill & Stroke
         ctx.fillStyle = rect.color;
         ctx.fillRect(px_screen_left, py, rect_w, rect_h);
-        ctx.strokeStyle = "rgba(0.4,0.4,0.4,0.2)";
-        ctx.lineWidth = 1 / devicePixelRatio;
+        ctx.strokeStyle = "#666";
+        ctx.lineWidth = 0.5 * canvasScale;
         ctx.strokeRect(px_screen_left, py, rect_w, rect_h);
 
         // Labels
-        if (rect_w / devicePixelRatio > MIN_FONT_SIZE) {
-            drawLabel(ctx, rect, px_screen_left, py, rect_w, rect_h, MIN_FONT_SIZE, devicePixelRatio);
+        if (rect_w > MIN_FONT_SIZE) {
+            drawLabel(ctx, rect, px_screen_left, py, rect_w, rect_h, MIN_FONT_SIZE, canvasScale);
         }
 
         // Perf Number
@@ -125,15 +127,15 @@ function drawRectangles(ctx, rectangles, minY, maxY, drawH, margin, xScale, devi
             const rect_h2 = ((rect.y2 - minY) / (maxY - minY)) * drawH;
             const py2 = margin.top + drawH - rect_h2;
             if (rect_h2 > 0) {
-                ctx.strokeStyle = "rgb(0.4,0.4,0.4)";
-                ctx.lineWidth = 1 / devicePixelRatio;
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 1 * canvasScale;
                 ctx.strokeRect(px_screen_left, py2, rect_w, rect_h2);
             }
         }
     })
 }
 
-function drawLabel(ctx, rect, x, y, w, h, minFont, dpr) {
+function drawLabel(ctx, rect, x, y, w, h, minFont, canvasScale) {
     const label = `${rect.name} (${rect.j})`;
     ctx.save();
     ctx.beginPath();
@@ -156,7 +158,7 @@ function drawLabel(ctx, rect, x, y, w, h, minFont, dpr) {
     let actualTextWidth = textMetrics.width;
 
     while (actualTextWidth > h * 0.8 && fontSize > minFont) {
-        fontSize -= 1 / dpr;
+        fontSize -= 1 * canvasScale;
         ctx.font = `${fontSize}px sans-serif`;
         textMetrics = ctx.measureText(label);
         actualTextWidth = textMetrics.width;
@@ -168,8 +170,8 @@ function drawLabel(ctx, rect, x, y, w, h, minFont, dpr) {
     ctx.restore();
 }
 
-function drawGrid(ctx, minY, maxY, W, margin, drawH, dpr) {
-    ctx.lineWidth = 1 / dpr;
+function drawGrid(ctx, minY, maxY, W, margin, drawH, canvasScale) {
+    ctx.lineWidth = 1 * canvasScale;
     ctx.font = `${Math.round(W * 0.02)}px Arial`;
     ctx.fillStyle = "#666";
     ctx.textAlign = "right";
@@ -191,17 +193,17 @@ function drawGrid(ctx, minY, maxY, W, margin, drawH, dpr) {
     }
 }
 
-function drawRatingLine(ctx, currentRating, minY, maxY, W, margin, drawH, dpr) {
+function drawRatingLine(ctx, currentRating, minY, maxY, W, margin, drawH, canvasScale) {
     if (currentRating >= minY && currentRating <= maxY) {
         const rate_py = margin.top + drawH - (((currentRating - minY) / (maxY - minY)) * drawH);
         ctx.strokeStyle = "#303030a0";
-        ctx.lineWidth = 3 / dpr;
+        ctx.lineWidth = 3 * canvasScale;
         ctx.beginPath();
         ctx.moveTo(margin.left, rate_py);
         ctx.lineTo(W - margin.right, rate_py);
         ctx.stroke();
 
-        ctx.lineWidth = 1 / dpr;
+        ctx.lineWidth = 1 * canvasScale;
         ctx.font = `${Math.round(W * 0.035)}px Arial`;
         ctx.fillStyle = "#303030d0";
         ctx.textAlign = "right";

@@ -27,9 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.onresize = () => {
-    if(cachedContests.length > 0) {
-        updateVisualization(new Date(parseInt(timelineSlider.value)));
-    }
+    updateVisualization(new Date(parseInt(timelineSlider.value)));
 };
 
 // Event Listeners
