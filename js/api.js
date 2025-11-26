@@ -52,7 +52,7 @@ function processFetchedData(history, metadata) {
         if (endDate > latestDate) latestDate = endDate;
         
         const dateStr = endDate.toISOString().split('.')[0]; 
-        csvLines.push(`${contestId.toUpperCase()}, ${weight}, ${h.Performance}, ${dateStr}`);
+        csvLines.push(`${contestId.toUpperCase()},${weight},${h.Performance},${dateStr}`);
     });
 
     return {

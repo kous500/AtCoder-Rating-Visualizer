@@ -1,7 +1,7 @@
 import { fetchAtCoderData } from './api.js';
 import { parseContestData, calculateRating } from './logic.js';
 import { drawRatingGraph } from './renderer.js';
-import { formatDate, toMidnight } from './utils.js';
+import { formatDate, toMidnight, getRatingTextColor } from './utils.js';
 
 // State
 let isPlaying = false;
@@ -121,10 +121,13 @@ function updateVisualization(currentDate) {
     document.getElementById('statSystem').innerText = stats.system;
     
     if (rectangles.length > 0) {
-        document.getElementById('statRating').innerText = Math.round(stats.rating);
+        const statRating = Math.round(stats.rating);
+        document.getElementById('statRating').innerText = statRating;
+        document.getElementById('statRating').style.color = getRatingTextColor(statRating);
         document.getElementById('statRawRating').innerText = stats.rawRating;
     } else {
         document.getElementById('statRating').innerText = "-";
+        document.getElementById('statRating').style.color = null;
         document.getElementById('statRawRating').innerText = "-";
     }
 

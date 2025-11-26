@@ -43,3 +43,14 @@ export function getRatingColor(rate) {
     else if (400 <= rate) return "#D9C5B2";
     else return "#D9D9D9";
 }
+
+export function getRatingTextColor(rate) {
+    if (2800 <= rate) return "#FF0000";
+    else if (2400 <= rate) return "#FF8000";
+    else if (2000 <= rate) return "#C0C000";
+    else if (1600 <= rate) return "#0000FF";
+    else if (1200 <= rate) return "#00C0C0";
+    else if (800 <= rate) return "#008000";
+    else if (400 <= rate) return "#804000";
+    else return "#808080";
+}

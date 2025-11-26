@@ -129,9 +129,6 @@ canvas {
     font-weight: bold;
     color: #333;
 }
-.stat-value.highlight {
-    color: #1b5695;
-}
 
 /* Animation Controls */
 .animation-controls {
