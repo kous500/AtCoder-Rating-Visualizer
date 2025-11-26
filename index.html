@@ -11,25 +11,26 @@
 <h1>AHC Rating Visualizer</h1>
 
 <div class="container">
-    <div class="input-section">
+    <section class="input-section">
         <h2>Input</h2>
 
         <div class="import-group">
-            <label for="atcoderId">Import from AtCoder</label>
+            <label for="userId">Import from AtCoder</label>
             <div class="note">Enter AtCoder ID to fetch heuristic contest history.</div>
-            <input type="text" id="atcoderId" placeholder="e.g. chokudai">
+            <input type="text" id="userId" placeholder="User ID">
             <button id="fetchButton">Fetch Data</button>
             <div id="fetchStatus" class="note"></div>
         </div>
 
-        <label for="refDate">Calculation Base Date (UTC+9)</label>
-        <div class="note">If the date entered is before 2025, the v1 rating system will be applied.</div>
-        <input type="date" id="refDate">
+        <div>
+            <label for="refDate">Calculation Base Date (UTC+9)</label>
+            <div class="note">If the date entered is before 2025, the v1 rating system will be applied.</div>
+            <input type="date" id="refDate">
 
-        <label for="contestData">Contest Data</label>
-        <div class="note">Format: ContestID,Weight,Performance,EndDate</div>
-        <textarea id="contestData"></textarea>
-        <!--<textarea id="contestData">
+            <label for="contestData">Contest Data</label>
+            <div class="note">Format: ContestID,Weight,Performance,EndDate</div>
+            <textarea id="contestData"></textarea>
+            <!--<textarea id="contestData">
 AHC025,1,1438,2023-10-22T10:00:00
 AHC026,1,1213,2023-11-05T10:00:00
 AHC027,1,1530,2023-12-10T10:00:00
@@ -53,10 +54,11 @@ AHC053,0.5,823,2025-09-13T14:00:00
 AHC054,1,1244,2025-09-29T10:00:00
 AHC056,1,1996,2025-11-17T10:00:00</textarea>-->
 
-        <button id="loadButton">Load Data & Draw</button>
-    </div>
+            <button id="loadButton">Load Data & Draw</button>
+        </div>
+    </section>
 
-    <div class="output-section">
+    <section class="output-section">
         <h2>Visualization</h2>
         
         <div class="animation-controls">
@@ -109,7 +111,7 @@ AHC056,1,1996,2025-11-17T10:00:00</textarea>-->
         <div id="canvas-container">
             <canvas id="ratingCanvas"></canvas>
         </div>
-    </div>
+    </section>
 </div>
 
 <footer>

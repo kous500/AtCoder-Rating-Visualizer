@@ -42,7 +42,7 @@ timelineSlider.addEventListener('input', () => {
 
 // Handlers
 async function handleFetch() {
-    const userId = document.getElementById('atcoderId').value.trim();
+    const userId = document.getElementById('userId').value.trim();
     const statusDiv = document.getElementById('fetchStatus');
 
     try {
@@ -134,7 +134,7 @@ function updateVisualization(currentDate) {
     // Manual Username fallback
     const statUser = document.getElementById('statUsername');
     if(statUser.innerText === '-') {
-        const inputId = document.getElementById('atcoderId').value;
+        const inputId = document.getElementById('userId').value;
         if(inputId) statUser.innerText = inputId + " (Manual)";
     }
 
